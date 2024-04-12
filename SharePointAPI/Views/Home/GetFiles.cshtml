@@ -1,0 +1,19 @@
+﻿@{
+    ViewBag.Title = "Archivos en la Biblioteca";
+}
+
+<h2>Archivos en la Biblioteca de Documentos</h2>
+
+@if (ViewBag.FileUrls != null && ViewBag.FileUrls.Count > 0)
+{
+    <ul>
+        @foreach (var fileUrl in ViewBag.FileUrls)
+        {
+            <li><a href="@fileUrl" target="_blank">@fileUrl</a></li>
+        }
+    </ul>
+}
+else
+{
+    <p>No se encontraron archivos en la biblioteca.</p>
+}

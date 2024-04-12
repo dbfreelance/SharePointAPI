@@ -1,0 +1,13 @@
+﻿@{
+    ViewBag.Title = "Subir Archivo";
+}
+
+<h2>Subir Archivo a SharePoint</h2>
+
+@using (Html.BeginForm("UploadFile", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    <input type="file" name="file" />
+    <input type="submit" value="Subir Archivo" />
+}
+
+<div>@ViewBag.Message</div>
