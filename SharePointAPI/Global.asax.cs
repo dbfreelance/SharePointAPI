@@ -20,7 +20,7 @@ namespace SharePointAPI
         protected void Application_BeginRequest()
         {
             // Habilitar CORS para todas las solicitudes
-            Response.AddHeader("Access-Control-Allow-Origin", "http://localhost:5037");
+            Response.AddHeader("Access-Control-Allow-Origin", "*");
             Response.AddHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
             Response.AddHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         }

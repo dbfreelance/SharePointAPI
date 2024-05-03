@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Mvc;
 using Microsoft.SharePoint.Client;
+
 
 namespace SharePointAPI.Controllers
 {
@@ -21,9 +24,9 @@ namespace SharePointAPI.Controllers
         public ActionResult UploadFile(HttpPostedFileBase file, string documentLibraryName)
         {
             // Credenciales de SharePoint
-            string userName = "gap\\SPInstall";
-            string password = "LRb1@uRg.Bft+aNzth7n";
-            string siteUrl = "http://10.223.163.100/sites/zonasegura";
+            string userName = ConfigurationManager.AppSettings["SharePointUserName"];
+            string password = ConfigurationManager.AppSettings["SharePointPassword"];
+            string siteUrl = ConfigurationManager.AppSettings["SharePointSiteUrl"];
             //string documentLibraryName = "Administracion";
 
             // Inicializar la URL del archivo
@@ -89,10 +92,10 @@ namespace SharePointAPI.Controllers
         public ActionResult GetFiles()
         {
             // Credenciales de SharePoint
-            string userName = "gap\\SPInstall";
-            string password = "LRb1@uRg.Bft+aNzth7n";
-            string siteUrl = "http://10.223.163.100/sites/zonasegura";
-            string documentLibraryName = "Administracion";
+            string userName = ConfigurationManager.AppSettings["SharePointUserName"];
+            string password = ConfigurationManager.AppSettings["SharePointPassword"];
+            string siteUrl = ConfigurationManager.AppSettings["SharePointSiteUrl"];
+            string documentLibraryName = "Adquisiciones";
 
             // Lista para almacenar las URLs de los archivos
             List<string> fileUrls = new List<string>();
@@ -110,7 +113,7 @@ namespace SharePointAPI.Controllers
                 // Obtener las URLs de los archivos
                 foreach (var file in files)
                 {
-                    fileUrls.Add("http://10.223.163.100"+file.ServerRelativeUrl);
+                    fileUrls.Add("http://10.223.163.100" + file.ServerRelativeUrl);
                 }
             }
 
@@ -118,6 +121,121 @@ namespace SharePointAPI.Controllers
             ViewBag.FileUrls = fileUrls;
 
             return View();
+        }
+        // Método para obtener un archivo desde SharePoint y devolverlo al cliente        
+        public ActionResult GetFile(string fileName, string documentLibraryName)
+        {
+            try
+            {
+                // Credenciales de SharePoint
+                string userName = ConfigurationManager.AppSettings["SharePointUserName"];
+                string password = ConfigurationManager.AppSettings["SharePointPassword"];
+                string siteUrl = ConfigurationManager.AppSettings["SharePointSiteUrl"];
+
+                // Obtener el archivo desde SharePoint
+                var credentials = new NetworkCredential(userName, password);
+                using (var context = new ClientContext(siteUrl))
+                {
+                    context.Credentials = credentials;
+                    var list = context.Web.Lists.GetByTitle(documentLibraryName);
+                    var files = list.RootFolder.Files;
+                    context.Load(files);
+                    context.ExecuteQuery();
+
+                    // Verificar si la colección de archivos no está vacía
+                    if (files != null && files.Count > 0)
+                    {
+                        // Iterar sobre cada archivo en la colección de archivos
+                        foreach (var file in files)
+                        {
+                            // Verificar si el nombre del archivo coincide con el nombre especificado
+                            if (file.Name == fileName)
+                            {
+                                // Obtener el archivo desde SharePoint y devolverlo al cliente
+                                var fileInfo = Microsoft.SharePoint.Client.File.OpenBinaryDirect(context, file.ServerRelativeUrl);
+                                return File(fileInfo.Stream, "application/octet-stream", fileName);
+                            }
+                        }
+
+                        // Si no se encontró el archivo, devolver un error al cliente
+                        return HttpNotFound();
+                    }
+                    else
+                    {
+                        // Si la colección de archivos está vacía, devolver un mensaje de error al cliente
+                        return Content("No se encontraron archivos en la biblioteca.");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Content(e.Message);
+            }
+        }
+
+        public ActionResult DeleteFile(string fileName, string documentLibraryName)
+        {
+            try
+            {
+                // Credenciales de SharePoint
+                string userName = ConfigurationManager.AppSettings["SharePointUserName"];
+                string password = ConfigurationManager.AppSettings["SharePointPassword"];
+                string siteUrl = ConfigurationManager.AppSettings["SharePointSiteUrl"];
+
+                // Eliminar el archivo de SharePoint
+                var credentials = new NetworkCredential(userName, password);
+                using (var context = new ClientContext(siteUrl))
+                {
+                    context.Credentials = credentials;
+                    var list = context.Web.Lists.GetByTitle(documentLibraryName);
+                    var files = list.RootFolder.Files;
+                    context.Load(files);
+                    context.ExecuteQuery();
+                    // Verificar si la colección de archivos no está vacía
+                    if (files != null && files.Count > 0)
+                    {
+                        // Iterar sobre cada archivo en la colección de archivos
+                        foreach (var file in files)
+                        {
+                            // Verificar si el nombre del archivo coincide con el nombre especificado
+                            if (file.Name == fileName)
+                            {
+                                file.DeleteObject();
+                                context.ExecuteQuery();
+                                return Content($"El archivo '{fileName}' se ha eliminado correctamente.");
+                            }
+                        }
+
+                        // Si no se encontró el archivo, devolver un error al cliente
+                        return HttpNotFound();
+                    }
+                    else
+                    {
+                        // Si la colección de archivos está vacía, devolver un mensaje de error al cliente
+                        return Content("No se encontraron archivos en la biblioteca.");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                // Devolver un mensaje de error
+                return Content($"Error al eliminar el archivo '{fileName}': {e.Message}");
+            }
+        }
+
+
+
+
+
+        // Endpoint para verificar la conectividad
+        [HttpGet]
+        public ActionResult TestConnection()
+        {
+            // Puedes devolver un mensaje simple
+            return Content("API is up and running!");
+
+            // O puedes devolver un código de estado HTTP 200 OK
+            // return new HttpStatusCodeResult(HttpStatusCode.OK);
         }
     }
 }
