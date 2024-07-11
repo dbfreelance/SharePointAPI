@@ -7,7 +7,29 @@
 @using (Html.BeginForm("UploadFile", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
 {
     <input type="file" name="file" />
+    <input type="hidden" name="documentLibraryName" value="Informes de gestion" />
+    <input type="hidden" name="folderName" value="Prueba" />
+    <input type="hidden" name="tipo" value="informe" />
     <input type="submit" value="Subir Archivo" />
 }
 
 <div>@ViewBag.Message</div>
+
+@Html.ActionLink("Descargar (sin tipo)", "GetFile", "Home", new { fileName = "test.png", documentLibraryName = "Administracion", folderName = "Consejo de Administracion - 17 de abril de 2023" }, null)
+
+@Html.ActionLink("Descargar (con tipo)", "GetFile", "Home", new { fileName = "test2.png", documentLibraryName = "Informes de gestion", folderName = "Prueba", tipo = "informe" }, null)
+
+<h2>Eliminar Archivo de SharePoint</h2>
+
+@using (Html.BeginForm("DeleteFile", "Home", FormMethod.Post))
+{
+    <label for="fileName">Nombre del archivo:</label>
+    <input type="text" id="fileName" name="fileName" />
+
+    <label for="documentLibraryName">Nombre de la biblioteca:</label>
+    <input type="text" id="documentLibraryName" name="documentLibraryName" />
+
+    <input type="submit" value="Eliminar Archivo" />
+}
+
+<div id="deleteResult"></div>
